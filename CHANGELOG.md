@@ -1,5 +1,7 @@
 # Changelog
 
+- Draw the aurora forecast as a stack of raised shells between 95 km and 320 km on every map source, rather than draping it on the surface or floating one sheet in the troposphere. Auroral emission occupies the thermosphere, and the vertical extent is what makes an oval read correctly against the limb; per-shell opacities composite to about what a single shell carried, and the stack totals fewer mesh cells than the one it replaced.
+- Add a global NOAA SWPC OVATION aurora probability layer covering both hemispheres. It renders the source 1° scalar grid through the existing Wind/weather raster and raised-shell patterns, polls on NOAA's roughly five-minute generation cadence through a shared bounded proxy, and labels the product throughout as a variable 30–90 minute FORECAST with separate valid and issue/input times and explicit visibility uncertainty.
 - Public Overpass instances are no longer used by default. Street Traffic
   roads come from TomTom flow tiles, OpenFreeMap vector tiles, or both, chosen
   on the layer row (TomTom / OSM / Hybrid) or with `?trafficRoads=`. With a
