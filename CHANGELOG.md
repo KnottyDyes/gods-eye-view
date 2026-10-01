@@ -1,5 +1,6 @@
 # Changelog
 
+- Add a Magnetosphere layer: Earth's magnetic field drawn as filaments in 3D, with a magnetopause boundary that responds to the live solar wind. The field comes from a vendored public-domain IGRF-14 table and is traced in the browser, so the filaments need no network; only the solar wind state is fetched, through `/api/magnetosphere`. The boundary compresses as dynamic pressure rises and is reported when it is driven inside geosynchronous orbit. Filaments are the internal field only and are labelled as increasingly schematic with altitude, since the stretched magnetotail is not modelled.
 - Public Overpass instances are no longer used by default. Street Traffic
   roads come from TomTom flow tiles, OpenFreeMap vector tiles, or both, chosen
   on the layer row (TomTom / OSM / Hybrid) or with `?trafficRoads=`. With a
