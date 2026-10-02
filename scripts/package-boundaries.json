@@ -2150,6 +2150,7 @@
       "src/view/index.js",
       "src/app/embed.js",
       "src/layers/aurora/rendering.js",
+      "src/layers/aurora/magneticLocalTime.js",
       "src/layers/aurora/source.js",
       "src/layers/aurora/index.js"
     ],
@@ -2670,6 +2671,7 @@
       "src/data/infrastructureOverlayEntry.js",
       "src/sources/infrastructureData.js",
       "src/layers/aurora/rendering.js",
+      "src/layers/aurora/magneticLocalTime.js",
       "src/layers/aurora/index.js"
     ],
     "external": [
