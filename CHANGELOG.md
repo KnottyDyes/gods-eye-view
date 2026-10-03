@@ -5,6 +5,8 @@
 - Add a Magnetosphere layer: Earth's magnetic field drawn as filaments in 3D, with a magnetopause boundary that responds to the live solar wind. The internal field comes from a vendored public-domain IGRF-14 table and is traced in the browser; only the solar wind state is fetched, through `/api/magnetosphere`. The boundary compresses as dynamic pressure rises and is reported when it is driven inside geosynchronous orbit.
 - Trace the magnetosphere filaments with an external field, so the lines stretch into a tail instead of closing into tidy arcs. Tsyganenko T96 is used when the feed carries dynamic pressure, Dst and the IMF By and Bz, which gives the model an explicit magnetopause and an interconnection field that lets southward IMF erode the dayside; T89c is the fallback when only Kp is available; neither means internal-only filaments rather than a guessed storm state. The layer reports which model drew the lines, and when either is being run outside the range it was fitted for. Dst is a new upstream feed (Kyoto, via NOAA SWPC) and its loss costs T96 only.
 
+## [0.2.1] — 2026-10-02 — God's Eye View through Your Agent (with security fixes and other features)
+
 - Ship each bundled data pack once. The region, marine, admin-boundary,
   county, military-name and neighborhood packs were emitted twice by the
   production build, as the JSON the browser fetches and as an unused
@@ -1269,6 +1271,13 @@ of current runtime behavior, see [`docs/CURRENT-STATE.md`](docs/CURRENT-STATE.md
   to Puppeteer 25.10.0 and Sharp 0.35.4. Cesium remains on 1.138.0.
   Browser QA awaits the new asynchronous executable-path lookup.
 
+### Live CCTV video
+
+- Live HLS video shares one decoder between the camera panel and projection,
+  with a DelDOT HTTPS source pack. Credit: Daniel Slay (@Danielslay86), PR #489.
+- Maintainer adjustments bound sessions and downloads, remove disk/subprocess
+  remuxing, reject redirects, and clean up playback on switching or disabling.
+
 ## [0.1.1] — 2026-09-01 — Installation and live-data fixes
 
 ### Changed
@@ -1506,9 +1515,3 @@ represent previously published GitHub Releases.
 
 - Initial project version.
 
-### Live CCTV integration candidate
-
-- Live HLS video shares one decoder between the camera panel and projection,
-  with a DelDOT HTTPS source pack. Credit: Daniel Slay (@Danielslay86), PR #489.
-- Maintainer adjustments bound sessions and downloads, remove disk/subprocess
-  remuxing, reject redirects, and clean up playback on switching or disabling.
