@@ -107,3 +107,67 @@ test('the shipped example implements every method the manager calls unconditiona
       `the example layer is missing ${name}(), which the manager calls without a guard`,
     );
 });
+
+test('the telemetry feed example implements required methods and parses packets without simulation', async (t) => {
+  const { mkdtempSync, writeFileSync, rmSync, readFileSync } =
+    await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const path = await import('node:path');
+  const { pathToFileURL } = await import('node:url');
+
+  const tmpDir = mkdtempSync(path.join(tmpdir(), 'gev-user-layer-'));
+  t.after(() => rmSync(tmpDir, { recursive: true, force: true }));
+
+  const code = readFileSync(
+    new URL('./telemetryFeed.layer.js.example', import.meta.url),
+    'utf8',
+  );
+  const tapAddressUrl = new URL('../data/tapAddress.js', import.meta.url).href;
+  const runnableCode = code.replace(
+    "'../data/tapAddress.js'",
+    `'${tapAddressUrl}'`,
+  );
+  const tmpFile = path.join(tmpDir, 'telemetryFeed.layer.js');
+  writeFileSync(path.join(tmpDir, 'package.json'), '{"type":"module"}');
+  writeFileSync(tmpFile, runnableCode);
+
+  const { default: descriptor, parseTelemetryPacket } = await import(
+    pathToFileURL(tmpFile).href
+  );
+
+  assert.equal(descriptor.id, 'local-telemetry');
+  const layer = instantiateUserLayer(descriptor);
+  for (const name of ['disable', 'enable', 'init', 'update']) {
+    assert.equal(typeof layer[name], 'function');
+  }
+
+  // Strict validation: rejects malformed, non-finite, and out-of-range records
+  assert.equal(parseTelemetryPacket(null), null);
+  assert.equal(parseTelemetryPacket({}), null);
+  assert.equal(
+    parseTelemetryPacket({ id: 'a', lat: 'invalid', lon: 10 }),
+    null,
+  );
+  assert.equal(parseTelemetryPacket({ id: 'a', lat: 95, lon: 10 }), null);
+  assert.equal(parseTelemetryPacket({ id: 'a', lat: 10, lon: 200 }), null);
+
+  // Accepts authentic telemetry with real coordinates
+  const valid = parseTelemetryPacket({
+    id: 'sensor-1',
+    name: 'Sensor 1',
+    lat: 37.7749,
+    lon: -122.4194,
+    alt: 15,
+    telemetry: { temp_c: 24.5 },
+  });
+  assert.deepEqual(valid, {
+    id: 'sensor-1',
+    name: 'Sensor 1',
+    lat: 37.7749,
+    lon: -122.4194,
+    alt: 15,
+    status: 'active',
+    telemetry: { temp_c: 24.5 },
+    timestamp: valid.timestamp,
+  });
+});

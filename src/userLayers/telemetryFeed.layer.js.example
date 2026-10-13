@@ -1,0 +1,266 @@
+/**
+ * Example User Layer: Local Telemetry Feed (PLC / MQTT / SCADA Bridge)
+ *
+ * Demonstrates how an operator connects authentic local telemetry into
+ * God's Eye View using the user-layer architecture without editing tracked files.
+ *
+ * HOW TO USE:
+ * 1. Copy this file to `telemetryFeed.layer.js` (untracked, gitignored).
+ * 2. Start your local telemetry bridge (e.g. MQTT-to-HTTP/SSE bridge on localhost:8080).
+ *    A minimal 20-line bridge snippet is provided at the bottom of this file.
+ * 3. Restart `npm run dev` to automatically discover and mount the layer.
+ *
+ * ZERO SIMULATION GUARANTEE:
+ * This layer only renders authentic telemetry emitted by your real feed.
+ * When no feed is reachable or transmitting, it remains cleanly idle with zero
+ * synthetic or invented fallback assets.
+ */
+
+import { parseTapAddress, tapUrl } from '../data/tapAddress.js';
+
+// Configurable operator endpoint. Must satisfy RFC1918 / loopback tapAddress rules.
+const DEFAULT_FEED_HOST = '127.0.0.1:8080';
+const DEFAULT_FEED_PATH = '/telemetry';
+const POLL_INTERVAL_MS = 5000;
+
+/**
+ * Parse and validate incoming telemetry packets.
+ * Rejects malformed objects, non-finite coordinates, or out-of-range coordinates.
+ *
+ * @param {unknown} raw Raw packet object
+ * @returns {object|null} Validated telemetry node or null
+ */
+export function parseTelemetryPacket(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const id = String(raw.id || '').trim();
+  const lat = Number(raw.lat);
+  const lon = Number(raw.lon);
+  const alt = Number.isFinite(Number(raw.alt)) ? Number(raw.alt) : 0;
+  if (!id || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+  return {
+    id,
+    name: String(raw.name || id).trim(),
+    lat,
+    lon,
+    alt,
+    status: String(raw.status || 'active').trim(),
+    telemetry:
+      raw.telemetry && typeof raw.telemetry === 'object' ? raw.telemetry : {},
+    timestamp: Number(raw.timestamp) || Date.now(),
+  };
+}
+
+export default {
+  id: 'local-telemetry',
+  label: 'Local Telemetry Feed',
+  createLayer: () => {
+    let _viewer = null;
+    let _dataSource = null;
+    let _enabled = false;
+    let _abortController = null;
+    const _nodes = new Map(); // id -> Cesium.Entity
+
+    return {
+      id: 'local-telemetry',
+      name: 'Local Telemetry Feed',
+      icon: '📡',
+      updateInterval: POLL_INTERVAL_MS,
+
+      // Required by DataLayerManager lifecycle
+      async init(viewer) {
+        if (_viewer) return;
+        _viewer = viewer;
+
+        const C =
+          typeof Cesium !== 'undefined'
+            ? Cesium
+            : typeof window !== 'undefined'
+              ? window.__CESIUM__
+              : null;
+
+        if (C && C.CustomDataSource) {
+          _dataSource = new C.CustomDataSource('local-telemetry');
+          _dataSource.show = false;
+          viewer.dataSources.add(_dataSource);
+        }
+      },
+
+      enable(viewer) {
+        _enabled = true;
+        if (_dataSource) _dataSource.show = true;
+      },
+
+      disable(viewer) {
+        _enabled = false;
+        _abortController?.abort();
+        _abortController = null;
+        if (_dataSource) {
+          _dataSource.show = false;
+          _dataSource.entities.removeAll();
+        }
+        _nodes.clear();
+      },
+
+      async update(viewer) {
+        if (!_enabled) return;
+
+        const address = parseTapAddress(DEFAULT_FEED_HOST);
+        if (!address) {
+          console.warn(
+            '[local-telemetry] Invalid feed address configured:',
+            DEFAULT_FEED_HOST,
+          );
+          return;
+        }
+
+        const url = tapUrl(address, DEFAULT_FEED_PATH);
+
+        _abortController?.abort();
+        _abortController = new AbortController();
+
+        try {
+          let res;
+          try {
+            res = await fetch(url, {
+              headers: { Accept: 'application/json' },
+              signal: _abortController.signal,
+            });
+          } catch (fetchErr) {
+            // If browser CSP restricts cross-port loopback, fall back to same-origin public/telemetry.json
+            res = await fetch('/telemetry.json', {
+              headers: { Accept: 'application/json' },
+              signal: _abortController.signal,
+            });
+          }
+
+          if (!res || !res.ok) return;
+
+          const data = await res.json();
+          const items = Array.isArray(data)
+            ? data
+            : Array.isArray(data?.nodes)
+              ? data.nodes
+              : [];
+
+          if (!items.length) {
+            // Clean empty state — zero invented assets
+            return;
+          }
+
+          const seenIds = new Set();
+
+          for (const item of items) {
+            const node = parseTelemetryPacket(item);
+            if (!node) continue;
+
+            seenIds.add(node.id);
+
+            const C =
+              typeof Cesium !== 'undefined'
+                ? Cesium
+                : typeof window !== 'undefined'
+                  ? window.__CESIUM__
+                  : null;
+
+            if (!C || !_dataSource) continue;
+
+            const pos = C.Cartesian3.fromDegrees(
+              node.lon,
+              node.lat,
+              node.alt,
+            );
+
+            let entity = _nodes.get(node.id);
+            if (!entity) {
+              entity = _dataSource.entities.add({
+                id: `telemetry-${node.id}`,
+                name: node.name,
+                position: pos,
+                point: {
+                  pixelSize: 10,
+                  color: C.Color.CYAN,
+                  outlineColor: C.Color.BLACK,
+                  outlineWidth: 2,
+                },
+                label: {
+                  text: node.name,
+                  font: '12px monospace',
+                  fillColor: C.Color.WHITE,
+                  outlineColor: C.Color.BLACK,
+                  outlineWidth: 2,
+                  style: C.LabelStyle.FILL_AND_OUTLINE,
+                  verticalOrigin: C.VerticalOrigin.BOTTOM,
+                  pixelOffset: new C.Cartesian2(0, -12),
+                  distanceDisplayCondition: new C.DistanceDisplayCondition(
+                    0,
+                    5000000,
+                  ),
+                },
+                description: JSON.stringify(node.telemetry, null, 2),
+              });
+              _nodes.set(node.id, entity);
+            } else {
+              entity.position = pos;
+              entity.description = JSON.stringify(node.telemetry, null, 2);
+            }
+          }
+
+          // Prune nodes that are no longer reported by the feed
+          for (const [id, entity] of _nodes.entries()) {
+            if (!seenIds.has(id)) {
+              _dataSource.entities.remove(entity);
+              _nodes.delete(id);
+            }
+          }
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            // Unreachable or offline feed: fail silently without injecting simulated telemetry
+          }
+        }
+      },
+
+      destroy() {
+        if (_viewer && _dataSource) {
+          _viewer.dataSources.remove(_dataSource, true);
+          _dataSource = null;
+        }
+        _nodes.clear();
+        _viewer = null;
+      },
+    };
+  },
+};
+
+/*
+ * ----------------------------------------------------------------------------
+ * MINIMAL STANDALONE TELEMETRY BRIDGE EXAMPLE (Node.js)
+ *
+ * To test this layer with real local telemetry, save this as `bridge.mjs` and run:
+ *   node bridge.mjs
+ *
+ * import http from 'node:http';
+ * const sample = [
+ *   {
+ *     id: 'plc-station-01',
+ *     name: 'Pump Station Alpha',
+ *     lat: 51.5074,
+ *     lon: -0.1278,
+ *     telemetry: { status: 'nominal', pressure_bar: 4.2, flow_lpm: 320 }
+ *   }
+ * ];
+ * http.createServer((req, res) => {
+ *   if (req.url === '/telemetry') {
+ *     res.writeHead(200, {
+ *       'Content-Type': 'application/json',
+ *       'Access-Control-Allow-Origin': '*'
+ *     });
+ *     res.end(JSON.stringify(sample));
+ *   } else {
+ *     res.writeHead(404).end();
+ *   }
+ * }).listen(8080, '127.0.0.1', () => {
+ *   console.log('Local telemetry bridge listening on http://127.0.0.1:8080/telemetry');
+ * });
+ * ----------------------------------------------------------------------------
+ */
