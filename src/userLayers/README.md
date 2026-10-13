@@ -7,6 +7,10 @@ time and registered automatically. `.gitignore` covers `*.layer.js` here, so
 your layers and their data never show up in `git status`, a diff, or a pull
 request — an upstream sync will not conflict with them.
 
+Two copyable templates are included in this directory:
+- `example.layer.js.example`: minimal point layer template.
+- `telemetryFeed.layer.js.example`: template for local telemetry / MQTT bridges over loopback using `tapAddress`.
+
 ## Contract
 
 ```js

@@ -39,7 +39,9 @@ export default {
 2. Restart the dev server. That is the whole procedure — no registration call,
    no config entry, no edit to `main.js` or `layerState.js`.
 
-`src/userLayers/example.layer.js.example` is a copyable starting point.
+`src/userLayers/example.layer.js.example` and
+`src/userLayers/telemetryFeed.layer.js.example` (for local private telemetry /
+MQTT bridges) are copyable starting points.
 
 ---
 
