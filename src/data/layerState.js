@@ -1,3 +1,6 @@
+// Restore labels are marked with msg(); ui/shareRestoration.js translates them.
+// Local, not i18n/marker.js: the token-ledger tests run this file in isolation.
+const msg = (text) => text;
 import { normalizeIdSwitches, patchRequestedIdSwitches } from './idSwitches.js';
 import reservationRows from './layerStateTokenReservations.json' with { type: 'json' };
 
@@ -473,19 +476,19 @@ export const SHARE_TRACKING_RESTORE_POLICIES = Object.freeze({
     optionOwner: 'flights',
     optionKey: 'selectedFlightsTrackingId',
     expiryWindowMs: 90_000,
-    label: 'flight',
+    label: msg('flight'),
   }),
   military: Object.freeze({
     optionOwner: 'flights',
     optionKey: 'selectedMilitaryTrackingId',
     expiryWindowMs: 45_000,
-    label: 'military flight',
+    label: msg('military flight'),
   }),
   satellites: Object.freeze({
     optionOwner: 'satellites',
     optionKey: 'selectedSatTrackingId',
     expiryWindowMs: 300_000,
-    label: 'satellite',
+    label: msg('satellite'),
   }),
 });
 
@@ -895,8 +898,6 @@ export function validateLayerStateRegistry(
 
 validateLayerStateRegistry();
 
-/** Produce the complete durable default state. */
-
 /* ------------------------------------------------------------------ *
  * Operator-supplied ("user") layers
  *
@@ -1007,6 +1008,7 @@ export function registerUserLayers(entries) {
   return sealUserLayers(entries, { reservedIds: REGISTERED_LAYER_IDS });
 }
 
+/** Produce the complete durable default state. */
 export function createDefaultLayerState() {
   return {
     version: LAYER_STATE_VERSION,
