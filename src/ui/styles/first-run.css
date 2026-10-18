@@ -209,6 +209,39 @@
   letter-spacing: 0.055rem;
 }
 
+.first-run-dismiss {
+  /* A 44px touch target; the negative margin keeps the footer row's height. */
+  min-height: 44px;
+  margin: -6px 0;
+  padding: 0 0 0 0.75rem;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.first-run-dismiss:hover,
+.first-run-dismiss:focus-visible {
+  color: rgba(54, 220, 255, 0.86);
+}
+
+.first-run-dismiss-touch {
+  display: none;
+}
+
+/* No hover and a coarse pointer: a phone or tablet, where ESC means nothing. */
+@media (hover: none) and (pointer: coarse) {
+  .first-run-dismiss-key {
+    display: none;
+  }
+  .first-run-dismiss-touch {
+    display: inline;
+  }
+}
+
 .first-run-suppress {
   display: flex;
   align-items: center;
@@ -270,8 +303,9 @@ body.scene-playback-mode #first-run-launcher {
   #first-run-launcher.visible {
     transform: translate(-50%, 0) scale(1);
   }
-  /* Five tiles have to clear the dock on a 375 x 812 phone, so the rows tighten
-     and the redundant "ESC to dismiss" hint (no ESC key on a phone) drops. */
+  /* Five tiles have to clear the dock on a 375 x 812 phone, so the rows
+     tighten. The dismiss button stays: it is the only way to close the card
+     without choosing a mission on a phone, which has no ESC key. */
   #first-run-launcher h2 {
     margin-top: 0.45rem;
   }
@@ -288,9 +322,6 @@ body.scene-playback-mode #first-run-launcher {
   }
   .first-run-choices small {
     font-size: 0.62rem;
-  }
-  .first-run-footer > span:last-child {
-    display: none;
   }
 }
 
