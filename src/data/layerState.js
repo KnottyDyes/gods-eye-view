@@ -325,6 +325,14 @@ const OPTION_GROUPS = Object.freeze({
       hybrid: 'h',
     }),
   ]),
+  gravity: Object.freeze([
+    stringOption('month', 'm', null),
+    enumOption('area', 'a', 'land', ['land', 'all'], { land: 'l', all: 'a' }),
+    enumOption('opacity', 'o', 'strong', ['light', 'strong'], {
+      light: 'l',
+      strong: 's',
+    }),
+  ]),
   'weather-lightning': Object.freeze([
     enumOption('opacity', 'o', 'strong', ['light', 'strong'], {
       light: 'l',
@@ -634,6 +642,12 @@ export const LAYER_STATE_REGISTRY = Object.freeze([
     id: 'gnss-integrity',
     token: '3',
     disposition: 'enabled-only',
+  }),
+  Object.freeze({
+    id: 'gravity',
+    token: '5',
+    disposition: 'enabled+options',
+    optionOwner: 'gravity',
   }),
   Object.freeze({ id: 'local-dams', token: 'q', disposition: 'enabled-only' }),
   Object.freeze({
