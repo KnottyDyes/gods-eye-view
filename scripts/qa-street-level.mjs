@@ -113,6 +113,7 @@ export const RAIL_ORDER = Object.freeze([
   'cctv-panel',
   'weather-panel',
   'recent-imagery-panel',
+  'gravity-panel',
   'street-level-panel',
   'global-context-panel',
 ]);
