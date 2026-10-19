@@ -919,10 +919,8 @@ test('the card closes without a keyboard: the ESC hint is a button, kept on phon
     new URL('./firstRunExperience.js', import.meta.url),
     'utf8',
   );
-  const css = fs.readFileSync(
-    new URL('./ui/styles/first-run.css', import.meta.url),
-    'utf8',
-  );
+  // The whole stylesheet, so a hide rule added in any other file is caught too.
+  const css = readStylesheet(new URL('../style.css', import.meta.url));
   const footer = html.slice(
     html.indexOf('class="first-run-footer"'),
     html.indexOf('data-first-run-status'),
@@ -942,6 +940,12 @@ test('the card closes without a keyboard: the ESC hint is a button, kept on phon
   // Phones used to hide the hint, leaving no way out but picking a mission.
   assert.doesNotMatch(css, /first-run-footer > span:last-child/);
   assert.doesNotMatch(css, /\.first-run-dismiss\s*\{[^}]*display:\s*none/);
+  // A 44px touch target that does not add to the footer row's height.
+  assert.match(
+    css,
+    /\.first-run-dismiss::before \{[^}]*position: absolute;[^}]*height: 44px;/,
+  );
+  assert.doesNotMatch(css, /\.first-run-dismiss \{[^}]*min-height/);
   // Touch screens read DISMISS rather than a key they do not have.
   assert.match(
     css,
