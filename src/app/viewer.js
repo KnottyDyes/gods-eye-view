@@ -1,6 +1,7 @@
 import * as Cesium from 'cesium';
 import { applyModelAtmosphereWorkaround } from './atmosphereCompat.js';
 import { StarrySky } from '../sky/starrySky.js';
+import { getWorldEllipsoid } from '../worldGeometry.js';
 
 const PINCH_ZOOM_MULTIPLIER = 8;
 const MAX_PINCH_PIXEL_DELTA = 120;
@@ -105,7 +106,12 @@ export function installTrackpadPinchZoom(
 
 /** Cesium.Viewer options of the standard globe viewer. */
 export function applicationViewerOptions(creditContainer) {
+  const ellipsoid = getWorldEllipsoid();
   return {
+    ellipsoid,
+    ...(ellipsoid.equals(Cesium.Ellipsoid.WGS84)
+      ? {}
+      : { skyAtmosphere: false }),
     timeline: false,
     animation: false,
     baseLayerPicker: false,
@@ -142,10 +148,15 @@ export function createApplicationViewer({ container, creditContainer }) {
     // render loop. See app/atmosphereCompat.js.
     applyModelAtmosphereWorkaround(viewer.scene);
     viewer.scene.globe.show = false;
-    viewer.scene.skyAtmosphere.show = true;
-    viewer.scene.skyAtmosphere.atmosphereLightIntensity = 18;
-    viewer.scene.skyAtmosphere.saturationShift = -0.12;
-    viewer.scene.skyAtmosphere.brightnessShift = -0.08;
+    if (
+      getWorldEllipsoid().equals(Cesium.Ellipsoid.WGS84) &&
+      viewer.scene.skyAtmosphere
+    ) {
+      viewer.scene.skyAtmosphere.show = true;
+      viewer.scene.skyAtmosphere.atmosphereLightIntensity = 18;
+      viewer.scene.skyAtmosphere.saturationShift = -0.12;
+      viewer.scene.skyAtmosphere.brightnessShift = -0.08;
+    }
     return viewer;
   } catch (error) {
     viewer.destroy();
