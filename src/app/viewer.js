@@ -133,6 +133,18 @@ export function applicationViewerOptions(creditContainer) {
   };
 }
 
+/** Configure atmosphere on a viewer if it is WGS84 and has skyAtmosphere. */
+export function configureAtmosphere(viewer) {
+  const ellipsoid = getWorldEllipsoid();
+  const skyAtmosphere = viewer.scene.skyAtmosphere;
+  if (ellipsoid.equals(Cesium.Ellipsoid.WGS84) && skyAtmosphere) {
+    skyAtmosphere.show = true;
+    skyAtmosphere.atmosphereLightIntensity = 18;
+    skyAtmosphere.saturationShift = -0.12;
+    skyAtmosphere.brightnessShift = -0.08;
+  }
+}
+
 /** Create the standard globe viewer in caller-owned, visible containers. */
 export function createApplicationViewer({ container, creditContainer }) {
   if (!container || !creditContainer)
@@ -148,15 +160,7 @@ export function createApplicationViewer({ container, creditContainer }) {
     // render loop. See app/atmosphereCompat.js.
     applyModelAtmosphereWorkaround(viewer.scene);
     viewer.scene.globe.show = false;
-    if (
-      getWorldEllipsoid().equals(Cesium.Ellipsoid.WGS84) &&
-      viewer.scene.skyAtmosphere
-    ) {
-      viewer.scene.skyAtmosphere.show = true;
-      viewer.scene.skyAtmosphere.atmosphereLightIntensity = 18;
-      viewer.scene.skyAtmosphere.saturationShift = -0.12;
-      viewer.scene.skyAtmosphere.brightnessShift = -0.08;
-    }
+    configureAtmosphere(viewer);
     return viewer;
   } catch (error) {
     viewer.destroy();

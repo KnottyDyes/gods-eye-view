@@ -6,7 +6,38 @@ import {
   getWorldRadius,
   setWorldEllipsoid,
 } from './worldGeometry.js';
-import { applicationViewerOptions } from './app/viewer.js';
+import { applicationViewerOptions, configureAtmosphere } from './app/viewer.js';
+
+test('Earth atmosphere retains all four exact settings, including WGS84 clones', () => {
+  for (const ellipsoid of [Ellipsoid.WGS84, Ellipsoid.clone(Ellipsoid.WGS84)]) {
+    const previous = setWorldEllipsoid(ellipsoid);
+    try {
+      const skyAtmosphere = {};
+      configureAtmosphere({ scene: { skyAtmosphere } });
+      assert.deepEqual(skyAtmosphere, {
+        show: true,
+        atmosphereLightIntensity: 18,
+        saturationShift: -0.12,
+        brightnessShift: -0.08,
+      });
+      assert.doesNotThrow(() => configureAtmosphere({ scene: {} }));
+    } finally {
+      setWorldEllipsoid(previous);
+    }
+  }
+});
+
+test('synthetic geometry never writes Earth atmosphere settings', () => {
+  const previous = setWorldEllipsoid(new Ellipsoid(900, 900, 600));
+  try {
+    const skyAtmosphere = Object.freeze({ show: false });
+    configureAtmosphere({ scene: { skyAtmosphere } });
+    assert.deepEqual(skyAtmosphere, { show: false });
+    assert.doesNotThrow(() => configureAtmosphere({ scene: {} }));
+  } finally {
+    setWorldEllipsoid(previous);
+  }
+});
 
 test('active ellipsoid defaults to the exact WGS84 singleton', () => {
   assert.equal(getWorldEllipsoid(), Ellipsoid.WGS84);
