@@ -157,23 +157,21 @@ function trackingIdOption(key, token, defaultValue = null) {
   });
 }
 
-function stringOption(key, token, defaultValue) {
+/** A UTC calendar day, YYYY-MM-DD; anything else restores as unset. */
+function dateOption(key, token, defaultValue = null) {
+  const day = (value) =>
+    typeof value === 'string' &&
+    /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+    Number.isFinite(Date.parse(`${value}T00:00:00Z`))
+      ? value
+      : null;
   return Object.freeze({
     key,
     token,
     defaultValue,
-    normalize: (value) => {
-      if (typeof value === 'number' && Number.isFinite(value))
-        return String(value).trim().toLowerCase();
-      if (typeof value !== 'string') return null;
-      const normalized = value.trim().toLowerCase();
-      return normalized ? normalized : null;
-    },
+    normalize: day,
     encode: (value) => String(value),
-    decode: (value) =>
-      typeof value === 'string' && value.trim()
-        ? value.trim().toLowerCase()
-        : null,
+    decode: day,
   });
 }
 
@@ -326,7 +324,7 @@ const OPTION_GROUPS = Object.freeze({
     }),
   ]),
   gravity: Object.freeze([
-    stringOption('month', 'm', null),
+    dateOption('month', 'm'),
     enumOption('area', 'a', 'land', ['land', 'all'], { land: 'l', all: 'a' }),
     enumOption('opacity', 'o', 'strong', ['light', 'strong'], {
       light: 'l',

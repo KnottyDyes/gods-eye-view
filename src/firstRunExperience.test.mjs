@@ -247,6 +247,10 @@ test('no storage is touched from a default parameter position', () => {
 
 test('the JS and CSS lists of screen-claiming surfaces stay in step', () => {
   const module = fs.readFileSync(
+    new URL('./exclusiveSurfaces.js', import.meta.url),
+    'utf8',
+  );
+  const firstRun = fs.readFileSync(
     new URL('./firstRunExperience.js', import.meta.url),
     'utf8',
   );
@@ -279,6 +283,8 @@ test('the JS and CSS lists of screen-claiming surfaces stay in step', () => {
     module,
     /export const EXCLUSIVE_SURFACE_CLASSES = Object\.freeze\(\[/,
   );
+  // First run keeps exporting the one shared list (the phone shell reads it too).
+  assert.match(firstRun, /export \{ EXCLUSIVE_SURFACE_CLASSES \};/);
 });
 
 test('exclusiveSurfaceActive reads the live body classes', () => {
@@ -371,10 +377,6 @@ test('an overlay with NO class to watch still disarms the launcher', () => {
 test('one ESC does one thing — the radio disclosure stops the launcher outright', () => {
   const ui = fs.readFileSync(
     new URL('./ui/radioBindings.js', import.meta.url),
-    'utf8',
-  );
-  const module = fs.readFileSync(
-    new URL('./firstRunExperience.js', import.meta.url),
     'utf8',
   );
 
@@ -986,6 +988,16 @@ test('the voice TOOL SCHEMA matches the pinned contract — the mission mapping 
   ]);
   // Cyber deliberately adds one layout; first-run missions still change no tools.
   hudLayout.enum = hudLayout.enum.filter((layout) => layout !== 'cyber');
+  const cameraMotion = legacyTools.find((tool) => tool.name === 'move_camera')
+    .parameters.properties.motion;
+  assert.deepEqual(cameraMotion.enum, [
+    'orbit',
+    'pan',
+    'tilt',
+    'rotate',
+    'rotate_globe',
+    'stop',
+  ]);
   const block = JSON.stringify(legacyTools);
   // Re-derived for the voice layer manifest (generated layer enums, alias and
   // field hints), point-and-ask's pointer/referent arguments and the prompt
@@ -995,11 +1007,15 @@ test('the voice TOOL SCHEMA matches the pinned contract — the mission mapping 
   // list descriptions; the missions still ride existing tools.
   // Street Level and GNSS extend the manifest; broadcast caveats describe tracked and analyst aircraft.
   // Air quality (ECCC AQHI) extends the manifest.
+  // Globe rotation adds one camera motion and its descriptions; Globe View
+  // framing/default guidance updates only move_camera and mode descriptions.
+  // Radio markup and the complete production-request comparison pin locality.
+  // Restore the base camera/Globe View wording with the globe-rotation append.
   // GRACE mass change extends the manifest.
-  assert.equal(block.length, 30698, 'serialized tool schema length drifted');
+  assert.equal(block.length, 30921, 'serialized tool schema length drifted');
   assert.equal(
     crypto.createHash('sha256').update(block).digest('hex'),
-    '580a24ac9fb22958f8feddd39de1272ba934c4b08c86e17a81cc58165ee15329',
+    'd917dcf3af68bbfc2bf8fcd45d15793980ca1420a6045cdd96aa6b9e5e33358d',
     'the first-run missions must ride EXISTING tools: no schema edit, no cache bust',
   );
   const instructions = fs.readFileSync(
