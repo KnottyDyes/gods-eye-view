@@ -35,12 +35,12 @@ export const LAYER_NAME_KEYS = Object.freeze({
   'fire-perimeters': msg('Fire Perimeters'),
   'gnss-integrity': msg('GNSS Integrity'),
   wind: msg('Wind'),
+  temperature: msg('Temperature'),
   'weather-radar': msg('Rain radar'),
   'weather-satellite': msg('Satellite clouds'),
   'weather-lightning': msg('Lightning density'),
   'weather-cyclones': msg('Cyclone advisories'),
   'air-quality': msg('Air quality'),
-  'surface-temperature': msg('Surface Temperature'),
   directions: msg('Directions'),
   'alpr-cameras': msg('ALPR Cameras'),
 });
