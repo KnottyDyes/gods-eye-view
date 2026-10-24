@@ -21,6 +21,8 @@ import { createAlprTileSource } from '../layers/alpr/source.js';
 import { createWeatherSource } from '../layers/weather/source.js';
 import { createCycloneSource } from '../layers/cyclones/source.js';
 import { createWindSource } from '../layers/wind/source.js';
+import { createAirTemperatureSource } from '../layers/airTemperature/source.js';
+import { createOceanSource } from '../layers/oceanTemperature/source.js';
 import { createFirmsSource } from '../layers/firms/source.js';
 import { createMapillarySource } from '../layers/streetLevel/providers/mapillary/source.js';
 import { createReferenceSources } from '../sources/reference.js';
@@ -49,7 +51,7 @@ export function createStandaloneLayerSources(overrides = {}) {
     transit: createTransitSource(),
     bikeshare: createBikeshareSource(),
     installations: createInstallationSource({ mapTiles }),
-    temperature: {
+    'land-temperature': {
       ...createTemperatureSource({ probeImpl: probeTileWithImage }),
       ...createTemperatureSampler(),
     },
@@ -58,6 +60,8 @@ export function createStandaloneLayerSources(overrides = {}) {
     alpr: createAlprTileSource(),
     firms: createFirmsSource(),
     wind: createWindSource(),
+    'air-temperature': createAirTemperatureSource(),
+    'ocean-temperature': createOceanSource(),
     weather: createWeatherSource(),
     cyclones: createCycloneSource(),
     mapillary: createMapillarySource({

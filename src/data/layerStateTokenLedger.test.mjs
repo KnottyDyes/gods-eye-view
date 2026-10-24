@@ -140,7 +140,7 @@ test('reservation ledger is complete, pinned, and rejects duplicate or malformed
       ...LEGACY_LAYER_STATE_TOKENS,
       'street-level': '0',
       'gnss-integrity': '3',
-      'surface-temperature': '5',
+      temperature: '5',
       'air-quality': '4',
     },
   );
