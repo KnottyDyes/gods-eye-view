@@ -91,10 +91,26 @@ try {
             state.provider.y >= 0 &&
             state.provider.right <= width + 1,
         );
-        assert.ok(
-          Math.abs(state.voice.y - state.provider.bottom) <= 14,
-          'picker is adjacent to voice',
-        );
+        if (height <= 520) {
+          assert.ok(
+            state.voice.width <= 56 && state.voice.right >= width - 60,
+            'landscape voice collapses to the corner mic',
+          );
+          assert.ok(
+            state.provider.right <= state.voice.x &&
+              Math.abs(
+                state.provider.y +
+                  state.provider.height / 2 -
+                  (state.voice.y + state.voice.height / 2),
+              ) <= 2,
+            'picker sits beside the mic',
+          );
+        } else {
+          assert.ok(
+            Math.abs(state.voice.y - state.provider.bottom) <= 14,
+            'picker is adjacent to voice',
+          );
+        }
         for (const sheet of [
           'layers',
           'cameras',
@@ -250,7 +266,7 @@ try {
         .querySelector('.gev-voice-settings-button')
         .getBoundingClientRect();
       return {
-        gap: voice.top - picker.bottom,
+        gap: voice.left - picker.right,
         pickerLeft: picker.left,
         pickerRight: picker.right,
         gearHeight: gear.height,
